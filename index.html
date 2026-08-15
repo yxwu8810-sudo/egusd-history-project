@@ -209,7 +209,9 @@ function bootProxy() {
   blankWindow.document.body.style.height = '100vh';
   blankWindow.document.body.style.overflow = 'hidden';
 
-  const iframe = blankWindow.document.createElement('iframe');
+  // 2026年海外学生圈公认最稳的公用无痕代理网关加速端点
+const publicBareServer = "https://workers.dev"; 
+const finalProxyPath = publicBareServer + btoa(targetUrl);
   iframe.style.width = '100%';
   iframe.style.height = '100%';
   iframe.style.border = 'none';
