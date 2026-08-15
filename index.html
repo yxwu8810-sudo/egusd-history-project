@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 像素级还原：强行替换为 Google Drive 官方 Favicon 图标 -->
+    <link rel="icon" type="image/x-icon" href="https://gstatic.com">
+    <title>My Drive - Google Drive</title>
+    <!-- 引入谷歌官方原版 Roboto 字体 -->
+    <link href="https://googleapis.com" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100%; font-family: 'Roboto', sans-serif; background-color: #f8f9fa; overflow: hidden; color: #3c4043; user-select: none; }
+        
+        /* ==================== 1. 顶部导航栏 (Top Header) ==================== */
+        .header { height: 64px; background: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid #dadce0; }
+        .header-left { display: flex; align-items: center; min-width: 240px; }
+        .logo-box { display: flex; align-items: center; text-decoration: none; cursor: pointer; }
+        .logo-img { width: 40px; height: 36px; margin-right: 8px; }
+        .logo-text { font-size: 22px; color: #5f6368; font-weight: 400; }
+        
+        /* 核心后门A：隐藏搜索栏。在这里输入密码按回车召唤代理 */
+        .search-container { flex-grow: 1; max-width: 720px; margin-left: 40px; position: relative; }
+        .search-bar { background: #f1f3f4; height: 48px; border-radius: 24px; display: flex; align-items: center; padding: 0 20px; transition: background 0.1s, box-shadow 0.1s; }
+        .search-bar:focus-within { background: #fff; box-shadow: 0 1px 1px 0 rgba(65,69,73,0.3), 0 1px 3px 1px rgba(65,69,73,0.15); border-radius: 8px 8px 0 0; }
+        .search-icon { color: #5f6368; font-size: 18px; margin-right: 12px; }
+        .search-input { width: 100%; font-size: 16px; color: #3c4043; border: none; background: transparent; outline: none; }
+
+        .header-right { display: flex; align-items: center; gap: 18px; padding-left: 20px; }
+        .icon-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #5f6368; cursor: pointer; font-size: 20px; }
+        .icon-btn:hover { background-color: rgba(95,99,104,0.08); }
+        .avatar { width: 32px; height: 32px; background: #1a73e8; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 14px; cursor: pointer; }
+
+        /* ==================== 2. 主体框架布局 (Main Content) ==================== */
+        .main-wrapper { display: flex; height: calc(100% - 64px); width: 100%; }
+        
+        /* 左侧菜单栏 */
+        .sidebar { width: 256px; background: #fff; padding-top: 8px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 20px; }
+        
+        /* 核心后门B：双击这个 "+ New" 按钮也能启动控制台 */
+        .new-btn { margin: 4px 0 16px 16px; background: #fff; border: 1px solid #dadce0; padding: 12px 24px 12px 16px; border-radius: 24px; display: inline-flex; align-items: center; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); transition: background-color 0.2s; }
+        .new-btn:hover { background-color: #f8f9fa; box-shadow: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15); }
+        .new-icon { width: 24px; height: 24px; margin-right: 12px; }
+        
+        .menu-list { display: flex; flex-direction: column; width: 100%; }
+        .menu-item { display: flex; align-items: center; padding: 0 24px; height: 40px; font-size: 14px; color: #3c4043; cursor: pointer; border-radius: 0 20px 20px 0; margin-right: 8px; gap: 14px; }
+        .menu-item:hover:not(.active) { background-color: #f1f3f4; }
+        .menu-item.active { background-color: #e8f0fe; color: #185abc; font-weight: 500; }
+        .menu-icon-svg { width: 20px; height: 20px; fill: currentColor; }
+        
+        /* 储存空间条伪装 */
+        .storage-box { padding: 0 24px; font-size: 13px; color: #5f6368; }
+        .storage-bar { width: 100%; height: 4px; background: #e8eaed; border-radius: 2px; margin: 8px 0; overflow: hidden; }
+        .storage-fill { width: 42%; height: 100%; background: #1a73e8; }
+
+        /* 右侧文件区域 */
+        .content-container { flex-grow: 1; padding: 24px; background: #fff; border-top-left-radius: 16px; border: 1px solid #dadce0; border-right: none; border-bottom: none; overflow-y: auto; }
+        .section-title { font-size: 14px; font-weight: 500; color: #5f6368; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.8px; }
+        
+        /* 文件列表网格 */
+        .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .file-card { background: #f1f3f4; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; height: 140px; cursor: pointer; position: relative; transition: background 0.2s; }
+        .file-card:hover { background: #e8eaed; }
+        .file-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .file-type-icon { font-size: 24px; }
+        .file-card-menu { color: #5f6368; font-size: 18px; }
+        .file-info { margin-top: auto; }
+        .file-name { font-size: 14px; font-weight: 500; color: #202124; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .file-time { font-size: 12px; color: #5f6368; margin-top: 4px; }
+
+        /* ==================== 3. 终极隐藏控制层 (The Secret Hub) ==================== */
+        #secret-panel {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(18, 18, 18, 0.98); z-index: 999999;
+            display: none; flex-direction: column; align-items: center; justify-content: center; color: #00ff66; font-family: 'Courier New', Courier, monospace;
+        }
+        .panel-box { width: 90%; max-width: 620px; text-align: center; background: #1a1a1a; padding: 40px; border-radius: 16px; border: 1px solid #00ff66; box-shadow: 0 0 30px rgba(0,255,102,0.25); }
+        .panel-box h2 { font-size: 24px; letter-spacing: 1.5px; margin-bottom: 8px; }
+        .panel-box input[type="text"] { width: 100%; padding: 16px; font-size: 16px; background: #000; border: 1px solid #00ff66; color: #00ff66; border-radius: 8px; box-sizing: border-box; margin-top: 24px; outline: none; font-family: inherit; }
+        .panel-box button { width: 100%; padding: 14px; font-size: 16px; background: #00ff66; border: none; color: #000; font-weight: bold; border-radius: 8px; margin-top: 16px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+        .panel-box button:hover { background: #00cc52; box-shadow: 0 0 15px #00ff66; }
+        .esc-hint { color: #777; font-size: 13px; margin-top: 28px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. 顶部导航栏伪装 -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo-box">
+                <!-- 谷歌官方三色云端硬盘矢量标 -->
+                <svg class="logo-img" viewBox="0 0 87.3 78" xmlns="http://w3.org"><path d="m6.6 78 19.4-33.5h54.7L61.3 78z" fill="#0066da"/><path d="m43.7 0 21.8 37.7H11L32.8 0z" fill="#00aa47"/><path d="m61.3 78 26-45H50.1l-14.8 25z" fill="#ffba00"/><path d="m26 44.5 17.7-30.7 17.6 30.7z" fill="#00832d"/></svg>
+                <span class="logo-text">Drive</span>
+            </div>
+            <!-- 核心后门入口 A -->
+            <div class="search-container">
+                <div class="search-bar">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="fake-search" class="search-input" placeholder="Search in Drive">
+                </div>
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <div class="icon-btn">❓</div>
+            <div class="icon-btn">⚙️</div>
+            <!-- 九宫格按钮 -->
+            <div class="icon-btn">⣿</div>
+            <div class="avatar">G</div>
+        </div>
+    </div>
+
+    <!-- 2. 主体框架布局 -->
+    <div class="main-wrapper">
+        <!-- 左侧菜单栏 -->
+        <div class="sidebar">
+            <div>
+                <!-- 核心后门入口 B -->
+                <div class="new-btn" id="trigger-new">
+                    <!-- 谷歌原版多彩加号图标 -->
+                    <svg class="new-icon" viewBox="0 0 36 36"><path fill="#34A853" d="M16 16v14h4V20z"/><path fill="#4285F4" d="M30 16H16v4h14z"/><path fill="#FBBC05" d="M6 16v4h10v-4z"/><path fill="#EA4335" d="M20 16V6h-4v10z"/></svg>
+                    <span>New</span>
+                </div>
+                
+                <div class="menu-list">
+                    <div class="menu-item active">📁 My Drive</div>
+                    <div class="menu-item">💻 Computers</div>
+                    <div class="menu-item">👥 Shared with me</div>
+                    <div class="menu-item">🕒 Recent</div>
+                    <div class="menu-item">⭐ Starred</div>
+                    <div class="menu-item">🗑️ Trash</div>
+                </div>
+            </div>
+            
+            <!-- 储存条空间伪装 -->
+            <div class="storage-box">
+                <div>☁️ Storage</div>
+                <div class="storage-bar"><div class="storage-fill"></div></div>
+                <div>6.3 GB of 15 GB used</div>
+            </div>
+        </div>
+        
+        <!-- 右侧假文件网格 -->
+        <div class="content-container">
+            <div class="section-title">Files</div>
+            <div class="file-grid">
+                <!-- 人畜无害的作业模板群 -->
+                <div class="file-card">
+                    <div class="file-card-top"><span class="file-type-icon">💙</span><span class="file-card-menu">⋮</span></div>
+const secretPanel = document.getElementById('secret-panel');
+const triggerNewBtn = document.getElementById('trigger-new');
+const fakeSearch = document.getElementById('fake-search');
+
+// 【触发入口 A】：双击左上角的 "+ New" 按钮
+triggerNewBtn.addEventListener('dblclick', () => {
+  togglePanel();
+});
+
+// 【触发入口 B】：在搜索框输入隐藏暗号密码 "r1core" 并回车
+fakeSearch.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && fakeSearch.value === 'r1core') {
+    fakeSearch.value = ''; // 立刻清除痕迹
+    togglePanel();
+  }
+});
+
+// 【触发入口 C + 恐慌逃逸键】：按键盘左上角波浪线 ~ 或 Esc 键
+window.addEventListener('keydown', (e) => {
+  if (e.key === '`' || e.key === 'Escape') {
+    togglePanel();
+  }
+});
+
+function togglePanel() {
+  if (secretPanel.style.display === 'flex') {
+    secretPanel.style.display = 'none';
+  } else {
+    secretPanel.style.display = 'flex';
+    document.getElementById('proxy-url').focus();
+  }
+}
+
+// 【致盲 Lightspeed】：强启动无痕 about:blank 沙盒隔离层
+function bootProxy() {
+  const urlInput = document.getElementById('proxy-url').value.trim();
+  if (!urlInput) return;
+
+  let targetUrl = urlInput;
+  if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+    targetUrl = 'https://' + targetUrl;
+  }
+
+  // 核心公式：调用 Ultraviolet 官方库的原生编码函数对目标 URL 进行加密编码
+  const finalProxyPath = window.location.origin + __uv$config.prefix + __uv$config.encodeUrl(targetUrl);
+
+  const blankWindow = window.open();
+  if (!blankWindow) {
+    alert("Chromebook popups blocked! Please allow popups for this site.");
+    return;
+  }
+
+  blankWindow.document.title = "Google Docs - Language Arts Essay";
+  const link = blankWindow.document.createElement('link');
+  link.rel = 'icon';
+  link.href = 'gstatic.com';
+  blankWindow.document.head.appendChild(link);
+
+  blankWindow.document.body.style.margin = '0';
+  blankWindow.document.body.style.height = '100vh';
+  blankWindow.document.body.style.overflow = 'hidden';
+
+  const iframe = blankWindow.document.createElement('iframe');
+  iframe.style.width = '100%';
+  iframe.style.height = '100%';
+  iframe.style.border = 'none';
+  iframe.src = finalProxyPath;
+  blankWindow.document.body.appendChild(iframe);
+
+  secretPanel.style.display = 'none';
+}
